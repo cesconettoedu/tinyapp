@@ -8,8 +8,14 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//the root or home page
 app.get("/", (req, res) => {
   res.send("Hello!");
+});
+
+//the urlDatabase info (obj)
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
 });
 
 app.listen(PORT, () => {
