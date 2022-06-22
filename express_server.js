@@ -21,7 +21,6 @@ function generateRandomString() {
   return result
 };
 
-
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -32,13 +31,11 @@ const urlDatabase = {
 //   res.send("Hello!");
 // });
 
-
 // add this to see if its redirect works
 app.get('/', (req, res) => {
   res.status(301);
   res.redirect('/urls');
 });
-
 
 //get the urls_index_template   
 app.get('/urls', (req, res) => {
@@ -66,7 +63,11 @@ app.post("/urls", (req, res) => {
   res.redirect('/urls');  // Respond with redirect to a My Urls pages
 });
 
-
+//generate a link that will redirect to the appropriate longURL
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL]
+  res.redirect(longURL);
+});
 
 
  
