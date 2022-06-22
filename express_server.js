@@ -28,12 +28,20 @@ const urlDatabase = {
 };
 
 //the root or home page
-app.get("/", (req, res) => {
-  res.send("Hello!");
+// app.get("/", (req, res) => {
+//   res.send("Hello!");
+// });
+
+
+// add this to see if its redirect works
+app.get('/', (req, res) => {
+  res.status(301);
+  res.redirect('/urls');
 });
 
-//get the urls_index_template
-app.get("/urls", (req, res) => {
+
+//get the urls_index_template   
+app.get('/urls', (req, res) => {
   const templateVars = { 
     urls: urlDatabase 
   };
@@ -52,23 +60,14 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //Add a POST Route to Receive the Form Submission
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL]=req.body.longURL  // add new url to database
+  console.log(urlDatabase) //just to make sure that are add
   res.send("Ok");         // Respond with 'Ok' (we will replace this)
 });
 
 
-
-
-function generateRandomString() {
-  var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  var result = ""
-  var size = characters.length;
-  for ( var i = 0; i < 6 ; i++ ) {
-    result += characters.charAt(Math.floor(Math.random() * size));
-  }
-  return result
-};
-
+ 
 
 
 
