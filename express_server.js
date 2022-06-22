@@ -10,6 +10,18 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 const PORT = 8080; //default port
 
+//generating string of 6 random alphanumeric characters:
+function generateRandomString() {
+  var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var result = ""
+  var size = characters.length;
+  for ( var i = 0; i < 6 ; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * size));
+  }
+  return result
+};
+
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -37,6 +49,25 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
+
+//Add a POST Route to Receive the Form Submission
+app.post("/urls", (req, res) => {
+  console.log(req.body);  // Log the POST request body to the console
+  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+});
+
+
+
+
+function generateRandomString() {
+  var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var result = ""
+  var size = characters.length;
+  for ( var i = 0; i < 6 ; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * size));
+  }
+  return result
+};
 
 
 
