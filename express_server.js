@@ -4,6 +4,10 @@ const app = express();
 // set the view engine to ejs
 app.set('view engine', 'ejs');
 
+//install another piece of middleware, body-parser
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({extended: true}));
+
 const PORT = 8080; //default port
 
 const urlDatabase = {
@@ -24,6 +28,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+//add get new routes needs to be before /urls/:id
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
