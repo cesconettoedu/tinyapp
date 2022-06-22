@@ -11,7 +11,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 const PORT = 8080; //default port
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`Express Server listening on port ${PORT}!`);
 });
 
 
