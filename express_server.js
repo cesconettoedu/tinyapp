@@ -10,6 +10,11 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 const PORT = 8080; //default port
 
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
+
+
 //generating string of 6 random alphanumeric characters:
 function generateRandomString() {
   var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -82,7 +87,4 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
