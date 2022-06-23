@@ -16,14 +16,14 @@ app.listen(PORT, () => {
 
 
 //generating string of 6 random alphanumeric characters:
-function generateRandomString() {
-  var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  var result = ""
-  var size = characters.length;
-  for ( var i = 0; i < 6 ; i++ ) {
+let generateRandomString = () => {
+  let characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = "";
+  let size = characters.length;
+  for (let i = 0; i < 6; i++) {
     result += characters.charAt(Math.floor(Math.random() * size));
   }
-  return result
+  return result;
 };
 
 const urlDatabase = {
@@ -42,10 +42,10 @@ app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
-//get the urls_index_template   
+//get the urls_index_template
 app.get('/urls', (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase 
+  const templateVars = {
+    urls: urlDatabase
   };
   res.render("urls_index", templateVars);
 });
@@ -55,7 +55,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.get("/urls/:shortURL", (req, res) => {                     
+app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
@@ -63,20 +63,20 @@ app.get("/urls/:shortURL", (req, res) => {
 //Add a POST Route to Receive the Form Submission
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[shortURL]=req.body.longURL  // add new url to database
-  console.log(urlDatabase) //just to make sure that are add
+  urlDatabase[shortURL] = req.body.longURL;  // add new url to database
+  console.log(urlDatabase); //just to make sure that are add
   res.redirect('/urls');  // Respond with redirect to a My Urls pages
 });
 
 //generate a link that will redirect to the appropriate longURL
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]
+  const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 
-//Add a POST to delete urls and redirect to /urls 
+//Add a POST to delete urls and redirect to /urls
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const shortURL = req.params.shortURL
+  const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect('/urls');  // redirect to MyUrls page
 });
@@ -89,8 +89,8 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
 //update a longUrl when submit
 app.post("/urls/:shortURL/update", (req, res) => {
-  const shortURL = req.params.shortURL
-  urlDatabase[shortURL]=req.body.longURL 
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = req.body.longURL;
   res.redirect('/urls');  // redirect to MyUrls page
 });
 
