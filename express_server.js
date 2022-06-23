@@ -64,7 +64,7 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;  // add new url to database
-  console.log(urlDatabase); //just to make sure that are add
+  //console.log(urlDatabase); //just to make sure that are add
   res.redirect('/urls');  // Respond with redirect to a My Urls pages
 });
 
