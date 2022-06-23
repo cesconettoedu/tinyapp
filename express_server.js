@@ -81,7 +81,12 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect('/urls');  // redirect to MyUrls page
 });
 
- 
+app.post("/urls/:shortURL/edit", (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  
+  res.render("urls_show", templateVars);
+});
+
 
 
 
