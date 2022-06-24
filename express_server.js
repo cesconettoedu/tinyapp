@@ -8,12 +8,14 @@ app.set('view engine', 'ejs');
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
 const PORT = 8080; //default port
 
 app.listen(PORT, () => {
   console.log(`Express Server listening on port ${PORT}!`);
 });
-
 
 //generating string of 6 random alphanumeric characters:
 let generateRandomString = () => {
@@ -31,20 +33,27 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-//the root or home page
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
-
 // add this to see if its redirect works
 app.get('/', (req, res) => {
   res.status(301);
   res.redirect('/urls');
 });
 
+// receive a username 
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username);
+  res.redirect('/urls');
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('username')
+  res.redirect('/urls');
+});
+
 //get the urls_index_template
 app.get('/urls', (req, res) => {
   const templateVars = {
+    username: req.cookies["username"],
     urls: urlDatabase
   };
   res.render("urls_index", templateVars);
@@ -52,11 +61,18 @@ app.get('/urls', (req, res) => {
 
 //add get new routes needs to be before /urls/:id
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { 
+    username: req.cookies["username"],
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL] 
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -64,8 +80,7 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;  // add new url to database
-  //console.log(urlDatabase); //just to make sure that are add
-  res.redirect('/urls');  // Respond with redirect to a My Urls pages
+  res.redirect('/urls');
 });
 
 //generate a link that will redirect to the appropriate longURL
@@ -83,7 +98,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //add Edit to Myt URls and redirect to urls_show
 app.post("/urls/:shortURL/edit", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { 
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    username: req.cookies["username"]
+  };
   res.render("urls_show", templateVars);
 });
 
