@@ -9,30 +9,23 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-      <!-- add place to put username -->
       <div>
         <%if (!username) { %>
-          <form class="form-inline" action="/login" method="POST">
-            <div class="form-group ">
-              <input class="form-control" type="text" name="username" placeholder="Username" style="width: 200px">
-              <button type="submit" class="btn btn-outline-dark">Login</button>
-            </div>
-          </form>
-        <% } else{ %> 
+          <div class="navbar-nav">
+          <a class="nav-item nav-link" href="/urls/register">Register</a>
+          <a class="nav-item nav-link" href="/urls/login">Login</a>
+        </div>
+        <% } else { %>
           <form class="form-inline" action="/logout" method="POST">
-           <div class="nav" style="height: 23px">
-            <p class="text-right mr-2" style="width: 200px"> Logged in As: <%= username %> </p>
-           </div>
-              <div class="form-group">
-        
-                <button type="submit" class="btn btn-outline-dark ">Logout</button>
-              </div>
-            </form>
+            <div class="nav" style="height: 23px">
+             <p class="text-right mr-2" style="width: 300px"> Logged in As: <%= username.email %> </p>
+            </div>
+               <div class="form-group">
+                  <button type="submit" class="btn btn-outline-dark ">Logout</button>
+               </div>
+             </form>
         <% } %> 
       </div>
     </div>
   </nav>
 </header>
-
-
-
