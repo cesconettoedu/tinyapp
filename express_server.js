@@ -32,7 +32,7 @@ const users = { }; // creating a user obj
 const err = {
   '400': '400: Bad Request - Email or Password empty',
   '401': '401: Unauthorized - Email already registered ',
-  '403': '403: Forbidden - Email or Password empty'
+  '403': '403: Forbidden - Email or Password empty',
 };
 let errMsg = '';
 
@@ -65,7 +65,33 @@ const checkEmail = (email) => {
 // Routes
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// create template to do registration
+// include a error 
+app.get("/urls/err", (req, res) => {
+  const templateVars = {
+    username: users[req.cookies["user_id"]],
+    err: errMsg
+  };
+  res.render("urls_err", templateVars);
+});
+
+//go to urls_index_template
+app.get('/urls', (req, res) => {
+  const templateVars = {
+    username: users[req.cookies["user_id"]],
+    urls: urlDatabase
+  };
+  res.render("urls_index", templateVars);
+});
+
+//go to Create TinyUrl urls/new 
+app.get("/urls/new", (req, res) => {
+  const templateVars = {
+    username: users[req.cookies["user_id"]], 
+  };
+  res.render("urls_new", templateVars);
+});
+
+// go to register page 
 app.get('/urls/register', (req, res) => {
   const templateVars = {
     username: users[req.cookies["user_id"]],
@@ -73,13 +99,68 @@ app.get('/urls/register', (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-//add new user to Users
+// got to login template 
+app.get('/urls/login', (req, res) => {
+  const templateVars = {
+    username: users[req.cookies["user_id"]],
+  };
+  res.render("urls_login", templateVars);
+});
+
+// go to edit a new URL for a Short Url
+app.get("/urls/:shortURL", (req, res) => {
+  const templateVars = {
+    username: users[req.cookies["user_id"]],
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL]
+  };
+  res.render("urls_show", templateVars);
+});
+
+//generate a link that will redirect to the appropriate longURL
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+});
+
+
+//Add a POST Route to Receive the Form Submission from urls_new
+app.post("/urls", (req, res) => {
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;  // add new url to database
+  res.redirect('/urls');
+});
+
+//Add a POST to delete urls from urls_index
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect('/urls');  // redirect to MyUrls page
+});
+
+//Add a POST to edit urls from urls_index
+app.post("/urls/:shortURL/edit", (req, res) => {
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    username: users[req.cookies["user_id"]]
+  };
+  res.render("urls_show", templateVars);
+});
+
+//update a longUrl when submit from urls_show
+app.post("/urls/:shortURL/update", (req, res) => {
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect('/urls');  // redirect to MyUrls page
+});
+
+//add new user in urls_register
 app.post('/urls/register', (req, res) => {
-  if (req.body.email === '' || req.body.password === '') {  //if the box are unfiled
+  if (req.body.email === '' || req.body.password === '') {  
     errMsg = err[400];
     res.redirect('/urls/err');
-    //res.status(400).send('Bad Request');
-  } else if (checkEmail(req.body.email) !== undefined) {  //if find email already register
+  } else if (checkEmail(req.body.email) !== undefined) {  
     errMsg = err[401];
     res.redirect('/urls/err');
   }
@@ -89,30 +170,18 @@ app.post('/urls/register', (req, res) => {
   users[newUser].id = newUser;
   users[newUser].email = req.body.email;
   users[newUser].password = req.body.password;
-  console.log(users);  // show the actual and new user add
   res.redirect('/urls/login');
-});
-
-// create template to do login
-app.get('/urls/login', (req, res) => {
-  const templateVars = {
-    username: users[req.cookies["user_id"]],
-    urls: urlDatabase
-  };
-  res.render("urls_login", templateVars);
 });
 
 // recieve and check if email is already register
 app.post('/urls/login', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
     errMsg = err[403];
-    res.redirect('/urls/err'); //........... em trabalho error 403
-  }                   //err[403]
-
+    res.redirect('/urls/err');
+  }                   
   let id = checkEmail(req.body.email);
-
   if (id === undefined) {
-    res.redirect('/urls/register'); //mandar para o erro 403
+    res.redirect('/urls/register');
   } else if (users[id].password === req.body.password) {
     res.cookie('user_id', id);
     res.redirect('/urls');
@@ -125,82 +194,3 @@ app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/urls');
 });
-
-//get the urls_index_template
-app.get('/urls', (req, res) => {
-  const templateVars = {
-    username: users[req.cookies["user_id"]],
-    urls: urlDatabase
-  };
-  res.render("urls_index", templateVars);
-});
-
-
-
-//adicionei para chamar os erros, ...................... em trabalho
-app.get("/urls/err", (req, res) => {
-  const templateVars = {
-    username: users[req.cookies["user_id"]],
-    err: errMsg
-  };
-  res.render("urls_err", templateVars);
-});
-
-//add get new routes needs to be before /urls/:id
-app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    username: users[req.cookies["user_id"]],
-    urls: urlDatabase
-  };
-  res.render("urls_new", templateVars);
-});
-
-
-app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = {
-    username: users[req.cookies["user_id"]],
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]
-  };
-  res.render("urls_show", templateVars);
-});
-
-//Add a POST Route to Receive the Form Submission
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;  // add new url to database
-  res.redirect('/urls');
-});
-
-//generate a link that will redirect to the appropriate longURL
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
-});
-
-//Add a POST to delete urls and redirect to /urls
-app.post("/urls/:shortURL/delete", (req, res) => {
-  const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect('/urls');  // redirect to MyUrls page
-});
-
-//add Edit to Myt URls and redirect to urls_show
-app.post("/urls/:shortURL/edit", (req, res) => {
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    username: users[req.cookies["user_id"]]
-  };
-  res.render("urls_show", templateVars);
-});
-
-//update a longUrl when submit
-app.post("/urls/:shortURL/update", (req, res) => {
-  const shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect('/urls');  // redirect to MyUrls page
-});
-
-
-
