@@ -1,10 +1,12 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
+const cookieParser = require('cookie-parser'); // nao vai precisar mais
+// const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const PORT = 8080; //default port
 
+// const MS_IN_A_DAY = 20 * 60 * 60 * 1000
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Middleware
@@ -12,6 +14,11 @@ const PORT = 8080; //default port
 app.set('view engine', 'ejs'); // set the view engine to ejs
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
+// app.use(cookieSession({
+//   name: 'session',
+//   keys: ['some secret word'],
+//   maxAge: MS_IN_A_DAY
+// }))
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Listener
@@ -29,12 +36,13 @@ const users = { }; // creating a user obj
 
 const err = {
   '400': '400: Bad Request - Email or Password empty',
-  '401': '401: Unauthorized - Email already registered ',
+  '4001': '400: Bad Request - Email already registered ',
   '403': '403: Forbidden - Email or Password empty',
-  '1' : 'Only Logged in users can do this action!',
-  '2' : 'Page not registered.'
+  '4031': '403: Forbidden - User is not found - Please register first.',
+  '4032': '403: Forbidden - Wrong password.',
+  '4033' : '403: Forbidden - Only Logged in users can do this action!',
+  '404': '404: Not Found'  
 };
-let errMsg = '';
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Help Function
@@ -74,17 +82,6 @@ const urlsForUser = (id) => {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Routes
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// include a error
-app.get("/urls/err", (req, res) => {
-  const templateVars = {
-    username: users[req.cookies["user_id"]],
-    err: errMsg
-  };
-  res.render("urls_err", templateVars);
-});
-
-//go to urls_index_template
 app.get('/urls', (req, res) => {
   const templateVars = {
     username: users[req.cookies["user_id"]],
@@ -133,9 +130,9 @@ app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     const templateVars = {
       username: users[req.cookies["user_id"]],
-      err: err['2']
-    };
-    res.render("urls_err", templateVars);
+    }
+    res.status(404).send(err['404'])
+    
   }
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
@@ -147,8 +144,8 @@ app.get("/u/:shortURL", (req, res) => {
 //Add a POST Route to Receive the Form Submission from urls_new
 app.post("/urls", (req, res) => {
   if (users[req.cookies["user_id"]] === undefined) {
-    errMsg = err[1];
-    res.redirect('/urls/err');// 1 Only Registered Users Can Shorten URLs
+    res.status(403).send(err['4033'])     //   <------------------checar
+   
   } else {
     urlDatabase[generateRandomString()] = {longURL: req.body.longURL, userID: req.cookies["user_id"]};  // add new url to database
     console.log(urlDatabase);
@@ -159,8 +156,8 @@ app.post("/urls", (req, res) => {
 //Add a POST to delete urls from urls_index
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (users[req.cookies["user_id"]] === undefined) {
-    errMsg = err[1];
-    res.redirect('/urls/err');
+    res.status(403).send(err['4033'])   //   <------------------checar
+   
   } else {
     const shortURL = req.params.shortURL;
     delete urlDatabase[shortURL];
@@ -171,8 +168,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //Add a POST to edit urls from urls_index
 app.post("/urls/:shortURL/edit", (req, res) => {
   if (users[req.cookies["user_id"]] === undefined) {
-    errMsg = err[1];
-    res.redirect('/urls/err');
+    res.status(403).send(err['4033'])   //   <------------------checar
+  
   } else {
     const templateVars = {
       shortURL: req.params.shortURL,
@@ -182,6 +179,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
     res.render("urls_show", templateVars);
   }
 });
+
 
 //update a longUrl when submit from urls_show
 app.post("/urls/:shortURL/update", (req, res) => {
@@ -193,12 +191,10 @@ app.post("/urls/:shortURL/update", (req, res) => {
 //add new user in urls_register
 app.post('/urls/register', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
-    errMsg = err[400];
-    res.redirect('/urls/err');
+    res.status(400).send(err['400'])
   } else if (checkEmail(req.body.email) !== undefined) {
-    errMsg = err[401];
-    res.redirect('/urls/err');
-  }
+    res.status(400).send(err['4001'])    
+  } else {
 
   let newUser = generateRandomString();
   users[newUser] = {};
@@ -206,27 +202,29 @@ app.post('/urls/register', (req, res) => {
   users[newUser].email = req.body.email;
   users[newUser].password = bcrypt.hashSync(req.body.password, 10); //used to incrypt password
   res.redirect('/urls/login');
+  }
 });
 
 // recieve and check if email is already register
 app.post('/urls/login', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
-    errMsg = err[403];
-    res.redirect('/urls/err');
+    res.status(400).send(err['400'])  
   }
   let id = checkEmail(req.body.email);
   if (id === undefined) {
-    res.redirect('/urls/register');
+    res.status(403).send(err['4031'])
   } else if (bcrypt.compareSync(req.body.password, users[id].password)) {
     res.cookie('user_id', id);
     res.redirect('/urls');
   } else {
-    res.redirect('/urls/login');
+    res.status(403).send(err['4032'])
   }
 });
 
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
+  //req.session = null;
+
   res.redirect('/urls');
 });
 
