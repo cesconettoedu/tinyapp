@@ -1,24 +1,23 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser'); // nao vai precisar mais
-// const cookieSession = require('cookie-session');
+//const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const PORT = 8080; //default port
-
-// const MS_IN_A_DAY = 20 * 60 * 60 * 1000
+const MS_IN_A_DAY = 20 * 60 * 60 * 1000;  //use in cookie session
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Middleware
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 app.set('view engine', 'ejs'); // set the view engine to ejs
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
-// app.use(cookieSession({
-//   name: 'session',
-//   keys: ['some secret word'],
-//   maxAge: MS_IN_A_DAY
-// }))
+//app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['mdlasmd2d34klmddmskalmd3225',],  //should be a secret Key, bring from another file
+  maxAge: MS_IN_A_DAY
+}));
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Listener
@@ -41,7 +40,7 @@ const err = {
   '4031': '403: Forbidden - User is not found - Please register first.',
   '4032': '403: Forbidden - Wrong password.',
   '4033' : '403: Forbidden - Only Logged in users can do this action!',
-  '404': '404: Not Found'  
+  '404': '404: Not Found'
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,8 +83,8 @@ const urlsForUser = (id) => {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 app.get('/urls', (req, res) => {
   const templateVars = {
-    username: users[req.cookies["user_id"]],
-    urls: urlsForUser(req.cookies["user_id"])
+    username: users[req.session.user_id],
+    urls: urlsForUser(req.session.user_id)
   };
   res.render("urls_index", templateVars);
 });
@@ -93,7 +92,7 @@ app.get('/urls', (req, res) => {
 //go to Create TinyUrl urls/new
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: users[req.cookies["user_id"]],
+    username: users[req.session.user_id],
   };
   res.render("urls_new", templateVars);
 });
@@ -101,7 +100,7 @@ app.get("/urls/new", (req, res) => {
 // go to register page
 app.get('/urls/register', (req, res) => {
   const templateVars = {
-    username: users[req.cookies["user_id"]],
+    username: users[req.session.user_id],
   };
   res.render("urls_register", templateVars);
 });
@@ -109,55 +108,51 @@ app.get('/urls/register', (req, res) => {
 // got to login template
 app.get('/urls/login', (req, res) => {
   const templateVars = {
-    username: users[req.cookies["user_id"]],
+    username: users[req.session.user_id],
   };
   res.render("urls_login", templateVars);
 });
 
 // go to edit a new URL for a Short Url
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = {
-    username: users[req.cookies["user_id"]],
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase.shortURL[longURL]
-  };
-  res.render("urls_show", templateVars);
+  if (users[req.session.user_id] === undefined) {
+    res.status(403).send(err['4033']);
+  } else {
+    const templateVars = {
+      username: users[req.session.user_id],
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL
+    };
+    res.render("urls_show", templateVars);
+  }
 });
 
 //generate a link that will redirect to the appropriate longURL
 app.get("/u/:shortURL", (req, res) => {
   
   if (urlDatabase[req.params.shortURL] === undefined) {
-    const templateVars = {
-      username: users[req.cookies["user_id"]],
-    }
-    res.status(404).send(err['404'])
-    
+    res.status(404).send(err['404']);
   }
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
-
 //////////////////////////////////////POST///////////////////////////////////////////////////////
 
 //Add a POST Route to Receive the Form Submission from urls_new
 app.post("/urls", (req, res) => {
-  if (users[req.cookies["user_id"]] === undefined) {
-    res.status(403).send(err['4033'])     //   <------------------checar
-   
+  if (users[req.session.user_id] === undefined) {
+    res.status(403).send(err['4033']);
   } else {
-    urlDatabase[generateRandomString()] = {longURL: req.body.longURL, userID: req.cookies["user_id"]};  // add new url to database
-    console.log(urlDatabase);
+    urlDatabase[generateRandomString()] = {longURL: req.body.longURL, userID: req.session.user_id};  // add new url to database
     res.redirect('/urls');
   }
 });
 
 //Add a POST to delete urls from urls_index
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (users[req.cookies["user_id"]] === undefined) {
-    res.status(403).send(err['4033'])   //   <------------------checar
-   
+  if (users[req.session.user_id] === undefined) {
+    res.status(403).send(err['4033']);
   } else {
     const shortURL = req.params.shortURL;
     delete urlDatabase[shortURL];
@@ -167,19 +162,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 //Add a POST to edit urls from urls_index
 app.post("/urls/:shortURL/edit", (req, res) => {
-  if (users[req.cookies["user_id"]] === undefined) {
-    res.status(403).send(err['4033'])   //   <------------------checar
-  
+  if (users[req.session.user_id] === undefined) {
+    res.status(403).send(err['4033']);
   } else {
     const templateVars = {
       shortURL: req.params.shortURL,
       longURL: urlDatabase[req.params.shortURL].longURL,
-      username: users[req.cookies["user_id"]]
+      username: users[req.session.user_id]
     };
     res.render("urls_show", templateVars);
   }
 });
-
 
 //update a longUrl when submit from urls_show
 app.post("/urls/:shortURL/update", (req, res) => {
@@ -191,40 +184,38 @@ app.post("/urls/:shortURL/update", (req, res) => {
 //add new user in urls_register
 app.post('/urls/register', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
-    res.status(400).send(err['400'])
+    res.status(400).send(err['400']);
   } else if (checkEmail(req.body.email) !== undefined) {
-    res.status(400).send(err['4001'])    
+    res.status(400).send(err['4001']);
   } else {
 
-  let newUser = generateRandomString();
-  users[newUser] = {};
-  users[newUser].id = newUser;
-  users[newUser].email = req.body.email;
-  users[newUser].password = bcrypt.hashSync(req.body.password, 10); //used to incrypt password
-  res.redirect('/urls/login');
+    let newUser = generateRandomString();
+    users[newUser] = {};
+    users[newUser].id = newUser;
+    users[newUser].email = req.body.email;
+    users[newUser].password = bcrypt.hashSync(req.body.password, 10); //used to incrypt password
+    res.redirect('/urls/login');
   }
 });
 
 // recieve and check if email is already register
 app.post('/urls/login', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
-    res.status(400).send(err['400'])  
+    res.status(400).send(err['400']);
   }
   let id = checkEmail(req.body.email);
   if (id === undefined) {
-    res.status(403).send(err['4031'])
+    res.status(403).send(err['4031']);
   } else if (bcrypt.compareSync(req.body.password, users[id].password)) {
-    res.cookie('user_id', id);
+    req.session.user_id = id;
     res.redirect('/urls');
   } else {
-    res.status(403).send(err['4032'])
+    res.status(403).send(err['4032']);
   }
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
-  //req.session = null;
-
+  req.session = null;
   res.redirect('/urls');
 });
 
