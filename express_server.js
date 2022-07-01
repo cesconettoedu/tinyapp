@@ -6,6 +6,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const PORT = 8080; //default port
 const MS_IN_A_DAY = 20 * 60 * 60 * 1000;  //use in cookie session
+const { getUserByEmail } = require('./helpers');
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Middleware
@@ -58,16 +59,6 @@ let generateRandomString = () => {
   return result;
 };
 
-//check if exist email before register
-const checkEmail = (email) => {
-  for (let obj in users) {
-    if (users[obj].email === email) {
-      return users[obj].id;
-    }
-  }
-  return undefined;
-};
-
 const urlsForUser = (id) => {
   let output = {};
   for (let y in urlDatabase) {
@@ -77,6 +68,15 @@ const urlsForUser = (id) => {
   }
   return output;
 };
+
+// const getUserByEmail = function(email, database) {
+//   for (let userid in database) {
+//     if (database[userid].email === email) {
+//       return database[userid];
+//     }
+//   }
+//   return undefined;
+// };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Routes
@@ -185,7 +185,7 @@ app.post("/urls/:shortURL/update", (req, res) => {
 app.post('/urls/register', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
     res.status(400).send(err['400']);
-  } else if (checkEmail(req.body.email) !== undefined) {
+  } else if (getUserByEmail(req.body.email, users) !== undefined) {
     res.status(400).send(err['4001']);
   } else {
 
@@ -203,11 +203,11 @@ app.post('/urls/login', (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
     res.status(400).send(err['400']);
   }
-  let id = checkEmail(req.body.email);
-  if (id === undefined) {
+  let user = getUserByEmail(req.body.email, users);
+  if (user === undefined) {
     res.status(403).send(err['4031']);
-  } else if (bcrypt.compareSync(req.body.password, users[id].password)) {
-    req.session.user_id = id;
+  } else if (bcrypt.compareSync(req.body.password, user.password)) {
+    req.session.user_id = user.id;
     res.redirect('/urls');
   } else {
     res.status(403).send(err['4032']);
@@ -218,4 +218,3 @@ app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
 });
-
