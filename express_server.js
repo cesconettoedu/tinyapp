@@ -6,7 +6,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const PORT = 8080; //default port
 const MS_IN_A_DAY = 20 * 60 * 60 * 1000;  //use in cookie session
-const { getUserByEmail } = require('./helpers');
+const { getUserByEmail, urlsForUser, generateRandomString} = require('./helpers');
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Middleware
@@ -45,38 +45,8 @@ const err = {
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-// Help Function
+// Help Function moved to helpers.js
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//generating string of 6 random alphanumeric characters:
-let generateRandomString = () => {
-  let characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = "";
-  let size = characters.length;
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * size));
-  }
-  return result;
-};
-
-const urlsForUser = (id) => {
-  let output = {};
-  for (let y in urlDatabase) {
-    if (urlDatabase[y].userID === id) {
-      output[y] = urlDatabase[y];
-    }
-  }
-  return output;
-};
-
-// const getUserByEmail = function(email, database) {
-//   for (let userid in database) {
-//     if (database[userid].email === email) {
-//       return database[userid];
-//     }
-//   }
-//   return undefined;
-// };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Routes
@@ -84,7 +54,7 @@ const urlsForUser = (id) => {
 app.get('/urls', (req, res) => {
   const templateVars = {
     username: users[req.session.user_id],
-    urls: urlsForUser(req.session.user_id)
+    urls: urlsForUser(req.session.user_id, urlDatabase)
   };
   res.render("urls_index", templateVars);
 });
