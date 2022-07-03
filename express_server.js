@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-//const cookieParser = require('cookie-parser');
+//const cookieParser = require('cookie-parser'); change to cookie-session
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const PORT = 8080; //default port
@@ -21,21 +21,15 @@ app.use(cookieSession({
 }));
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-// Listener
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-app.listen(PORT, () => {
-  console.log(`Express Server listening on port ${PORT}!`);
-});
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////
 // Database
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 const urlDatabase = { };
 
 const users = { }; // creating a user obj
 
+//Just to better show user action
 const err = {
-  '400': '400: Bad Request - Email or Password empty',
+  '400': '400: Bad Request - Email or Password empty.',
   '4001': '400: Bad Request - Email already registered ',
   '403': '403: Forbidden - Email or Password empty',
   '4031': '403: Forbidden - User is not found - Please register first.',
@@ -187,4 +181,11 @@ app.post('/urls/login', (req, res) => {
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// Listener
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+app.listen(PORT, () => {
+  console.log(`Express Server listening on port ${PORT}!`);
 });
